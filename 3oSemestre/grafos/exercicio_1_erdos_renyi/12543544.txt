@@ -1,0 +1,149 @@
+/*
+ * USP - ICMC - Sao Carlos
+ * Modelagem Computacional em Grafos — SCC0216
+ * Danielle Modesti — 12543544
+ * Professor Kuruvilla Joseph Abraham
+ * Data: 11/04/2022
+ * 
+ * Trabalho 1 — Geracao de Matriz de adjacencia do modelo Erdos Renyi
+ * 
+ * Descricao do trabalho: Dada uma entrada [N, p]: N sendo o numero de vertices
+ * de um grafo nao direcionado e p sendo um parametro 0 < p < 1 que esta
+ * relacionado a probabilidade de uma conexao existir entre 2 vertices. Faca uma
+ * funcao que retorne a matriz de adjacencia M de um grafo no modelo Erdos Renyi
+ * dados os parametros N e p.
+ * 
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h> // Para seed aleatoria
+
+// Conexao = aresta
+#define CONNECTION_MADE 1
+
+// Faremos matriz simetrica
+typedef struct Matrix {
+    int **data;
+    int dimension;
+} matrix_t;
+
+void allocate_matrix(matrix_t *matrix);
+void print_matrix(matrix_t *matrix);
+void draw_graph_connections(matrix_t *matrix, float vertex_connect_probability);
+void free_matrix(matrix_t *matrix);
+
+// Passaremos argumentos pela linha de comando.
+int main(int argc, char *argv[]) {
+    // Especificando uso da linha de comando
+    if (argc < 3) {
+        printf("Uso: ./<nome_executavel> <N> <p>, ");
+        printf("sendo N o numero de vertices e p a probabilidade de uma ");
+        printf("conexao existir entre 2 vertices.\n");
+        return EXIT_FAILURE;
+    }
+
+    // Atribuindo argumentos da linha de comando
+    int vertex_amt = atoi(argv[1]);
+    float vertex_connect_probability = atof(argv[2]);
+
+    // Checagens de validade de dados
+    if (vertex_amt <= 0) {
+        printf("A quantidade de vertices nao pode ser <= 0.\n");
+        return EXIT_FAILURE;
+    }
+
+    if (vertex_connect_probability < 0 || vertex_connect_probability > 1) {
+        printf("A probabilidade p de conexao entre 2 vertices deve ser um ");
+        printf(" valor tal que 0 < p < 1.\n");
+        return EXIT_FAILURE;
+    }
+
+    // Gerando uma matriz zerada
+    matrix_t adjacency_matrix;
+    adjacency_matrix.dimension = vertex_amt;
+    allocate_matrix(&adjacency_matrix);
+
+    // Printando a matriz zerada (inicial)
+    // diagonais da matriz sempre serao zero
+    print_matrix(&adjacency_matrix);
+
+    // Seed aleatoria se baseia no horario atual do computador
+    srand(time(NULL));
+
+    // --- Sorteando arestas ---
+    draw_graph_connections(&adjacency_matrix, vertex_connect_probability);
+
+    // Desalocando memoria dinamicamente alocada
+    free_matrix(&adjacency_matrix);
+    
+    return EXIT_SUCCESS;
+}
+
+void allocate_matrix(matrix_t *matrix) {
+    matrix->data = (int **) calloc(matrix->dimension, sizeof(int *));
+
+    for (int i = 0; i < matrix->dimension; i++) {
+        matrix->data[i] = (int *) calloc(matrix->dimension, sizeof(int));
+    }
+}
+
+void print_matrix(matrix_t *matrix) {
+    printf("Matriz M = \n");
+
+    for (int i = 0; i < matrix->dimension; i++) {
+        for (int j = 0; j < matrix->dimension; j++) {
+            printf("%d ", matrix->data[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void draw_graph_connections(matrix_t *matrix, float vertex_connect_probability) {
+    // Quantidade de execucoes para gerar esse grafo: N (N - 1) / 2
+    int expected_iteration_amt = matrix->dimension * (matrix->dimension - 1) / 2;
+    
+    // Para checar se o meu programa esta certo
+    int real_iteration_amt = 0;
+
+    // Para cada iteracao, sera gerado um aleatorio x_i
+    float curr_sorted = 0;
+    for (int i = 0; i < matrix->dimension; i++) {
+        for (int j = i + 1; j < matrix->dimension; j++) {
+            printf("\nIteracao %d:\n", real_iteration_amt + 1);
+            
+            curr_sorted = (float)rand() / RAND_MAX; 
+
+            // Caso x_i entre nos extremos e nao satisfaca 0 < x_i < 1 (chance baixa)
+            while (curr_sorted <= 0 || curr_sorted == 1) {
+                curr_sorted = (float)rand() / RAND_MAX; 
+            }
+
+            printf("Sorteado: %f\n", curr_sorted);
+            printf("Probabilidade de gerar vertice que devemos superar: %f\n", vertex_connect_probability);
+
+            if (curr_sorted > vertex_connect_probability) {
+                matrix->data[i][j] = CONNECTION_MADE;
+
+                // Esse resultado eh simetrico
+                matrix->data[j][i] = CONNECTION_MADE;
+            }
+
+            print_matrix(matrix);
+
+            // Para fins de comparacao com valores esperados de minima iteracao
+            real_iteration_amt++;
+        }
+    }
+
+    printf("Total de iteracoes esperadas: %d\n", expected_iteration_amt);
+    printf("Total de iteracoes executadas: %d\n", real_iteration_amt);
+}
+
+void free_matrix(matrix_t *matrix) {
+    for (int i = 0; i < matrix->dimension; i++) {
+        free(matrix->data[i]);
+    }
+
+    free(matrix->data);
+}
