@@ -1,0 +1,60 @@
+  0 1 2 3
+0 0 0 3 3
+1 1 2 3 3
+2 2 3 3 -
+3 3 3 3 - 
+4 4 4 4 -
+5 5 5 8 -
+6 6 6 8 -
+7 7 8 - -
+8 8 8 - -
+9 9 - - -
+
+     0  1  2  3  4  5  6  7  8  9
+v = {2, 4, 3, 1, 6, 7, 8, 9, 1, 7}
+
+// Pegar menor potencia da sua faixa e arredondar p baixo
+RMQ(2, 8) = min(RMQ(2, 2), RMQ(R - 2^k + 1, k)) = min(Mat(2, 2), Mat(5, 2))
+k = floor(log2(R - L + 1))
+k == 2
+
+M(i, j) = arg min(v[M(i, j - 1)], v[M(i + 2⁽j - 1⁾, j - 1)]);
+
+// Primeira coluna eh trivial, pois o comprimento
+// 1 eh ele proprio
+for (int i = 0; i < n; i++) {
+    M[i][0] = i;
+}
+
+// possibilidade: j <= tam = log2(n) equivalente (1 << j) <= n
+for (j = 1; (1 << j) <= n; j++) { // (1 << j) == 2 ^j
+    for (i = 0; i < i + (1 << j) - 1 < n; i++) {
+
+        // Quem eh menor? O menor do comprimento anterior
+        // ou o novo elemento colocado aqui?
+        if (vet[M[i][j - 1]] <= vet[M[i + (1 << (j - 1))][j - 1]]) {
+            M[i][j] = vet[M[i][j - 1]];
+
+        }
+
+        else {
+            M[i][j] = vet[M[i + (1 << (j - 1))][j - 1]];
+        }
+    }
+}
+
+------------------------------------
+
+               A
+                            lca(E, F) = RMQ(6, 9) ???
+
+    B              G
+C   D  F
+
+    E
+
+indice = 1 2 3 4 5 6 7 8 9 10 11 12 13
+path =   A B C B D E D B F B  A  G  A --> percorrer em profundidade
+depth =  0 1 2 1 2 3 2 1 2 1  0  1  0
+
+// PROBLEMA DE ACHAR ANCESTRAL COMUM = RMQ
